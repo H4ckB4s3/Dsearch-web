@@ -21,7 +21,7 @@
     <!-- Android Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="/img/android-chrome-192x192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/img/android-chrome-512x512.png">
-
+    
     <!-- Favicon for browsers -->
     <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
@@ -83,13 +83,19 @@
                 <input type="submit" class="search-button" value="Go">
             </form>
         </div>
-        <p class="slogan">Enjoying Web3 and ready to make the switch?</p>
-        <a href="https://impervious.com/beacon" class="download-button">Download Beacon Browser</a>
+        <p class="slogan">Want to use Dsearch in your Chromium Browser?</p>
+        <a href="https://chromewebstore.google.com/detail/dsearch-extension/icjnmgficmgalidlpdkbcgjppolcpjja" class="download-button">Install Extension</a>
     </div>
     <footer>
-        <p>&copy; <a href="/">2024 Dsearch.org</a> - <a href="https://ens.domains" target="_blank">ENS</a> & <a href="https://handshake.org" target="_blank">HNS</a> Bridge.</p>
+        <p>&copy; <a href="/" id="yearLink">Dsearch.org</a> - <a href="https://ens.domains" target="_blank">ENS</a> & <a href="https://handshake.org" target="_blank">HNS</a> Bridge.</p>
     </footer>
     <script src="/js/query.js"></script>
     <script src="/js/check.js"></script>
+    <script>
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+    // Update the link text with the current year
+    document.getElementById('yearLink').textContent = currentYear + ' Dsearch.org';
+</script>
 </body>
 </html>
