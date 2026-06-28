@@ -85,7 +85,7 @@ async function handleHandshakeDomain(domain, path) {
             if (ipfsRecord) {
                 const data = ipfsRecord.substring(5); // Remove 'ipfs:' prefix
                 if (data) {
-                    window.open(`https://${data}ipfs.inbrowser.link`, '_blank');
+                    window.open(`https://${data}.ipfs.inbrowser.link`, '_blank');
                     redirectPerformed = true;
                 }
             }
