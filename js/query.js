@@ -49,79 +49,92 @@ async function handleHandshakeDomain(domain, path) {
         const txtRecords = await fetchTXTRecords(domain);
         
         if (!txtRecords || txtRecords.length === 0) {
-            // Fallback to standard HNS resolution if no TXT records found
-            const url = path ? `http://${domain}.hns.to/${path}` : `http://${domain}.hns.to`;
-            window.open(url, '_blank');
+            // No TXT records found - show error message
+            showError(`No TXT records found for domain: ${domain}`);
             return;
         }
 
-        // Process TXT records in order of priority
+        // Check for records in priority order
         let redirectPerformed = false;
         
-        for (const record of txtRecords) {
-            const [prefix, ...dataParts] = record.split(':');
-            const data = dataParts.join(':');
-            
-            if (!prefix || !data) continue;
-            
-            switch (prefix.toLowerCase()) {
-                case 'link':
-                    // Redirect to https://<data>
-                    const linkUrl = `https://${data}`;
-                    window.open(linkUrl, '_blank');
-                    redirectPerformed = true;
-                    break;
-                    
-                case 'url':
-                    // Redirect to https://<data>
-                    const url = `https://${data}`;
-                    window.open(url, '_blank');
-                    redirectPerformed = true;
-                    break;
-                    
-                case 'ipfs':
-                    // Redirect to https://<data>ipfs.inbrowser.link
-                    const ipfsUrl = `https://${data}ipfs.inbrowser.link`;
-                    window.open(ipfsUrl, '_blank');
-                    redirectPerformed = true;
-                    break;
-                    
-                case 'onion':
-                    // Redirect to http://<data>
-                    const onionUrl = `http://${data}`;
-                    window.open(onionUrl, '_blank');
-                    redirectPerformed = true;
-                    break;
-                    
-                case 'nostr':
-                    // Redirect to nostr:<data>
-                    window.open(`nostr:${data}`, '_blank');
-                    redirectPerformed = true;
-                    break;
-                    
-                case 'ens':
-                    // Redirect to https://<data>.limo
-                    const ensUrl = `https://${data}.limo`;
-                    window.open(ensUrl, '_blank');
-                    redirectPerformed = true;
-                    break;
+        // 1. Check for 'link:' record
+        const linkRecord = txtRecords.find(record => record.toLowerCase().startsWith('link:'));
+        if (linkRecord) {
+            const data = linkRecord.substring(5); // Remove 'link:' prefix
+            if (data) {
+                window.open(`https://${data}`, '_blank');
+                redirectPerformed = true;
             }
-            
-            // Stop after first matching redirect
-            if (redirectPerformed) break;
         }
         
-        // If no redirect was performed, fallback to standard HNS resolution
+        // 2. Check for 'url:' record (if no link found)
         if (!redirectPerformed) {
-            const url = path ? `http://${domain}.hns.to/${path}` : `http://${domain}.hns.to`;
-            window.open(url, '_blank');
+            const urlRecord = txtRecords.find(record => record.toLowerCase().startsWith('url:'));
+            if (urlRecord) {
+                const data = urlRecord.substring(4); // Remove 'url:' prefix
+                if (data) {
+                    window.open(`https://${data}`, '_blank');
+                    redirectPerformed = true;
+                }
+            }
+        }
+        
+        // 3. Check for 'ipfs:' record (if no link or url found)
+        if (!redirectPerformed) {
+            const ipfsRecord = txtRecords.find(record => record.toLowerCase().startsWith('ipfs:'));
+            if (ipfsRecord) {
+                const data = ipfsRecord.substring(5); // Remove 'ipfs:' prefix
+                if (data) {
+                    window.open(`https://${data}ipfs.inbrowser.link`, '_blank');
+                    redirectPerformed = true;
+                }
+            }
+        }
+        
+        // 4. Check for 'onion:' record (if no link, url, or ipfs found)
+        if (!redirectPerformed) {
+            const onionRecord = txtRecords.find(record => record.toLowerCase().startsWith('onion:'));
+            if (onionRecord) {
+                const data = onionRecord.substring(6); // Remove 'onion:' prefix
+                if (data) {
+                    window.open(`http://${data}`, '_blank');
+                    redirectPerformed = true;
+                }
+            }
+        }
+        
+        // 5. Check for 'nostr:' record (if no link, url, ipfs, or onion found)
+        if (!redirectPerformed) {
+            const nostrRecord = txtRecords.find(record => record.toLowerCase().startsWith('nostr:'));
+            if (nostrRecord) {
+                const data = nostrRecord.substring(6); // Remove 'nostr:' prefix
+                if (data) {
+                    window.open(`nostr:${data}`, '_blank');
+                    redirectPerformed = true;
+                }
+            }
+        }
+        
+        // 6. Check for 'ens:' record (if no link, url, ipfs, onion, or nostr found)
+        if (!redirectPerformed) {
+            const ensRecord = txtRecords.find(record => record.toLowerCase().startsWith('ens:'));
+            if (ensRecord) {
+                const data = ensRecord.substring(4); // Remove 'ens:' prefix
+                if (data) {
+                    window.open(`https://${data}.limo`, '_blank');
+                    redirectPerformed = true;
+                }
+            }
+        }
+        
+        // If no redirect was performed, show error message
+        if (!redirectPerformed) {
+            showError(`No valid redirect record found for domain: ${domain}. The records were checked in this order: link, url, ipfs, onion, nostr, ens`);
         }
         
     } catch (error) {
         console.error('Error fetching TXT records:', error);
-        // Fallback to standard HNS resolution on error
-        const url = path ? `http://${domain}.hns.to/${path}` : `http://${domain}.hns.to`;
-        window.open(url, '_blank');
+        showError(`Failed to fetch TXT records for ${domain}: ${error.message}`);
     }
 }
 
@@ -154,4 +167,40 @@ async function fetchTXTRecords(domain) {
         console.error("Fetch Error:", error);
         throw error;
     }
+}
+
+// Function to show error messages to the user
+function showError(message) {
+    // Remove any existing error messages
+    const existingError = document.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Create error message element
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.style.cssText = `
+        color: #ff4444;
+        background: rgba(255, 68, 68, 0.1);
+        padding: 15px;
+        margin: 20px auto;
+        border: 1px solid #ff4444;
+        border-radius: 8px;
+        max-width: 600px;
+        text-align: center;
+        font-weight: bold;
+    `;
+    errorDiv.textContent = message;
+    
+    // Insert error message after the form
+    const form = document.getElementById('hns-form');
+    form.parentNode.insertBefore(errorDiv, form.nextSibling);
+    
+    // Auto-remove error after 8 seconds
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.remove();
+        }
+    }, 8000);
 }
